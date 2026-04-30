@@ -1,6 +1,6 @@
 # PHPUnit Oefeningen
 
-Vijf oefeningen om PHPUnit te leren, opgebouwd van eenvoudig naar gevorderd.
+Zeven oefeningen om PHPUnit te leren, opgebouwd van eenvoudig naar gevorderd.
 
 ## Setup
 
@@ -14,12 +14,17 @@ composer install
 # Alle oefeningen
 composer test
 
-# Of per oefening
+# Per oefening
 composer test-oefening1
 composer test-oefening2
 composer test-oefening3
 composer test-oefening4
 composer test-oefening5
+composer test-oefening6
+composer test-oefening7
+
+# Demo
+composer test-demo
 
 # Of direct met phpunit
 vendor/bin/phpunit
@@ -30,15 +35,15 @@ vendor/bin/phpunit tests/Unit/Oefening1
 
 ## Overzicht van de oefeningen
 
-| #  | Onderwerp                  | Nieuwe concepten                                      |
-|----|----------------------------|-------------------------------------------------------|
-| 1  | StringHelper               | `assertTrue`, `assertFalse`                           |
-| 2  | ShoppingCart               | `assertSame`, `assertEquals`, toestand testen         |
-| 3  | AgeValidator               | `expectException`, `expectExceptionMessage`           |
-| 4  | Calculator                 | `#[DataProvider]`, meerdere inputs in één test        |
-| 5  | OrderService               | `createMock`, `expects`, `once`, `stringContains`     |
-| 6  | DailyGreeter               | `Carbon::setTestNow`, tijd-afhankelijke logica, `tearDown` |
-| 7  | AuthService                | stub + mock gecombineerd, `willReturn`, `never()`          |
+| #  | Onderwerp            | Nieuwe concepten                                                    |
+|----|----------------------|---------------------------------------------------------------------|
+| 1  | StringHelper         | `assertTrue`, `assertFalse`                                         |
+| 2  | ShoppingCart         | `assertSame`, `assertEquals`, toestand testen                       |
+| 3  | AgeValidator         | `expectException`, `expectExceptionMessage`                         |
+| 4  | TemperatureConverter | `#[DataProvider]`, `assertEqualsWithDelta`                          |
+| 5  | OrderService         | `createMock`, `expects`, `once()`, `stringContains`                 |
+| 6  | DailyGreeter         | `Carbon::setTestNow`, tijd-afhankelijke logica, `tearDown`          |
+| 7  | AuthService          | stub + mock gecombineerd, `willReturn`, `never()`                   |
 
 ---
 
@@ -46,10 +51,11 @@ vendor/bin/phpunit tests/Unit/Oefening1
 
 ```
 app/Exercises/
-├── Oefening1/StringHelper.php       ← klasse al geschreven
+├── Demo/Calculator.php              ← live demo tijdens de les
+├── Oefening1/StringHelper.php
 ├── Oefening2/ShoppingCart.php
 ├── Oefening3/AgeValidator.php
-├── Oefening4/Calculator.php
+├── Oefening4/TemperatureConverter.php
 ├── Oefening5/
 │   ├── MailerInterface.php
 │   └── OrderService.php
@@ -60,14 +66,21 @@ app/Exercises/
     └── AuthService.php
 
 tests/Unit/
-├── Oefening1/StringHelperTest.php   ← jij schrijft de tests
+├── Demo/CalculatorTest.php          ← live demo tijdens de les
+├── Oefening1/StringHelperTest.php
 ├── Oefening2/ShoppingCartTest.php
 ├── Oefening3/AgeValidatorTest.php
-├── Oefening4/CalculatorTest.php
+├── Oefening4/TemperatureConverterTest.php
 ├── Oefening5/OrderServiceTest.php
 ├── Oefening6/DailyGreeterTest.php
 └── Oefening7/AuthServiceTest.php
 ```
+
+---
+
+## Demo — Calculator
+
+De `Demo/` map bevat een `Calculator` klasse en een leeg testbestand dat live ingevuld wordt tijdens de les. De Calculator heeft vier methoden: `add`, `subtract`, `multiply`, `divide`. `divide()` gooit een `DivisionByZeroError` als de deler nul is.
 
 ---
 
@@ -102,43 +115,28 @@ Roep `expectException()` altijd **vóór** de code die de exception gooit.
 
 ---
 
-## Oefening 4 — Calculator *(DataProvider)*
+## Oefening 4 — TemperatureConverter *(DataProvider + assertEqualsWithDelta)*
 
-**Concept:** Één testmethode uitvoeren met meerdere invoersets.
+**Concept:** Één testmethode uitvoeren met meerdere invoersets. Bij floats gebruik je `assertEqualsWithDelta` in plaats van `assertSame`, zodat kleine afrondingsverschillen geen valse fout opleveren.
 
 ```php
-#[DataProvider('optelsommenProvider')]
-public function test_optellen(int $a, int $b, int $expected): void
+#[DataProvider('celsiusNaarFahrenheitProvider')]
+public function test_celsius_naar_fahrenheit(float $celsius, float $verwacht): void
 {
-    $this->assertSame($expected, $this->calculator->add($a, $b));
+    $this->assertEqualsWithDelta($verwacht, $this->converter->celsiusToFahrenheit($celsius), 0.01);
 }
 
-public static function optelsommenProvider(): array
+public static function celsiusNaarFahrenheitProvider(): array
 {
     return [
-        'positief' => [1, 2, 3],
-        'nul'      => [0, 0, 0],
-        'negatief' => [-1, 1, 0],
+        'vriespunt'           => [0.0,   32.0],
+        'kookpunt'            => [100.0, 212.0],
+        'lichaamstemperatuur' => [37.0,  98.6],
     ];
 }
 ```
 
----
-
-## Oefening 6 — DailyGreeter *(Carbon::setTestNow)*
-
-**Concept:** Tijd-afhankelijke code testen door de klok te bevriezen.
-
-`DailyGreeter::greet()` roept `Carbon::now()` aan — de uitkomst hangt af van het uur.
-Zonder de klok te mocken is de test niet deterministisch.
-
-```php
-Carbon::setTestNow('2025-01-01 09:00:00'); // klok staat stil
-$this->assertSame('Goedemorgen', $greeter->greet());
-Carbon::setTestNow(null);                  // altijd herstellen in tearDown()
-```
-
-Test ook de grenzen: precies 12:00, 17:59, 18:00 — daar zitten de meeste bugs.
+De sleutel van elke rij (`'vriespunt'`, `'kookpunt'`, ...) verschijnt in de output als de test faalt.
 
 ---
 
@@ -162,3 +160,38 @@ $service->placeOrder('klant@example.com', 'Laptop');
 ```
 
 PHPUnit verifieert de verwachting automatisch na de test.
+
+---
+
+## Oefening 6 — DailyGreeter *(Carbon::setTestNow)*
+
+**Concept:** Tijd-afhankelijke code testen door de klok te bevriezen.
+
+`DailyGreeter::greet()` roept `Carbon::now()` aan — de uitkomst hangt af van het uur.
+Zonder de klok te mocken is de test niet deterministisch.
+
+```php
+Carbon::setTestNow('2025-01-01 09:00:00'); // klok staat stil
+$this->assertSame('Goedemorgen', $greeter->greet());
+Carbon::setTestNow(null);                  // altijd herstellen in tearDown()
+```
+
+Test ook de grenzen: precies 12:00, 17:59, 18:00 — daar zitten de meeste bugs.
+
+---
+
+## Oefening 7 — AuthService *(stub + mock gecombineerd)*
+
+**Concept:** Een mock die ook een waarde teruggeeft (`willReturn`), gecombineerd met verificatie van aanroepen.
+
+```php
+$loader = $this->createMock(UserConfigLoader::class);
+$loader->expects($this->once())
+       ->method('load')
+       ->willReturn(['alice' => password_hash('geheim123', PASSWORD_BCRYPT)]);
+
+$auth = new AuthService($loader);
+$this->assertTrue($auth->login('alice', 'geheim123'));
+```
+
+Gebruik `$this->never()` om te controleren dat de loader *niet* aangeroepen wordt bij ongeldige invoer.

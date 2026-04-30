@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Exercises\Oefening4;
+namespace App\Exercises\Demo;
 
 use DivisionByZeroError;
 

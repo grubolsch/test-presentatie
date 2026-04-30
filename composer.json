@@ -27,7 +27,8 @@
         "test-oefening4": "vendor/bin/phpunit tests/Unit/Oefening4",
         "test-oefening5": "vendor/bin/phpunit tests/Unit/Oefening5",
         "test-oefening6": "vendor/bin/phpunit tests/Unit/Oefening6",
-        "test-oefening7": "vendor/bin/phpunit tests/Unit/Oefening7"
+        "test-oefening7": "vendor/bin/phpunit tests/Unit/Oefening7",
+        "test-demo": "vendor/bin/phpunit tests/Unit/Demo"
     },
     "config": {
         "optimize-autoloader": true,
